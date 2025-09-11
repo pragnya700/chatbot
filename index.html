@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>KittyChat — Gemini 2.5 Flash</title>
+  <title>KittyAIChat — Gemini 2.5 Flash</title>
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -21,7 +21,6 @@
   </script>
 
   <style>
-    /* small helpers */
     .slide-left { transform: translateX(0); transition: transform .25s ease; }
     .slide-left.hidden { transform: translateX(-100%); }
     .typing-dots span { display:inline-block; width:6px; height:6px; margin-right:4px; border-radius:999px; background:currentColor; animation: blink 1s infinite; }
@@ -32,12 +31,39 @@
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
 
 <!-- =========================
-     LOGIN PAGE
+     LANDING / START PAGE (default)
      ========================= -->
-<div id="login-page" class="min-h-screen flex items-center justify-center p-6">
+<div id="landing-page" class="min-h-screen flex flex-col items-center justify-center p-8">
+  <div class="max-w-5xl w-full grid md:grid-cols-2 gap-8 items-center">
+    <div>
+      <h1 class="text-4xl font-extrabold">Responsive AI Chatbot — Powered by Gemini 2.5 Flash</h1>
+      <p class="mt-4 text-gray-600 dark:text-gray-300">A single-file demo that connects to Google Gemini (replace the API key). Guest name, Google login, chat history, and a modern UX — ready to extend to production with a secure backend.</p>
+      <div class="mt-6 flex gap-3">
+        <button id="open-chat-btn" class="px-5 py-3 bg-blue-600 text-white rounded-lg">Open Chat</button>
+        <a href="#how" id="how-link" class="px-5 py-3 border rounded-lg">How it works</a>
+      </div>
+    </div>
+    <div>
+      <div class="rounded-xl border p-4 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-purple-900">
+        <div class="text-sm uppercase opacity-70">Live Demo</div>
+        <div class="mt-4 font-medium">Click Open Chat to begin — try: "Explain quantum computing"</div>
+        <div class="mt-2 text-sm opacity-70">Features: persistent history, export, dark mode, avatars, quick prompts.</div>
+      </div>
+    </div>
+  </div>
+  <footer class="mt-12 text-sm opacity-70">© <span id="year"></span> KittyAIChat — Demo</footer>
+</div>
+
+<!-- =========================
+     LOGIN PAGE (shown when Open Chat clicked)
+     ========================= -->
+<div id="login-page" class="hidden min-h-screen flex items-center justify-center p-6">
   <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
-    <h1 class="text-2xl font-bold mb-2 text-center">Welcome to KittyAI-Chatbot</h1>
-    <p class="text-sm text-gray-600 dark:text-gray-300 mb-6 text-center">Sign in with Google or continue as guest</p>
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-2xl font-bold">Sign in to KittyAIChat</h1>
+      <button id="back-to-landing" class="px-3 py-1 rounded-md border text-sm">← Back</button>
+    </div>
+    <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">Sign in with Google or continue as guest</p>
 
     <!-- Google One-tap / Sign-in -->
     <div id="g_id_onload"
@@ -61,31 +87,7 @@
 </div>
 
 <!-- =========================
-     LANDING / START PAGE (shown after login)
-     ========================= -->
-<div id="landing-page" class="hidden min-h-screen flex flex-col items-center justify-center p-8">
-  <div class="max-w-5xl w-full grid md:grid-cols-2 gap-8 items-center">
-    <div>
-      <h1 class="text-4xl font-extrabold">Responsive AI Chatbot — Powered by Gemini 2.5 Flash</h1>
-      <p class="mt-4 text-gray-600 dark:text-gray-300">A single-file demo that connects to Google Gemini. Guest name, Google login, chat history, and a modern UX — ready to extend to production with a secure backend.</p>
-      <div class="mt-6 flex gap-3">
-        <button id="open-chat-btn" class="px-5 py-3 bg-blue-600 text-white rounded-lg">Open Chat</button>
-        <a href="#how" id="how-link" class="px-5 py-3 border rounded-lg">How it works</a>
-      </div>
-    </div>
-    <div>
-      <div class="rounded-xl border p-4 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-purple-900">
-        <div class="text-sm uppercase opacity-70">Live Demo</div>
-        <div class="mt-4 font-medium">Click Open Chat to begin — try: "Explain quantum computing"</div>
-        <div class="mt-2 text-sm opacity-70">Features: persistent history, export, dark mode, avatars, quick prompts.</div>
-      </div>
-    </div>
-  </div>
-  <footer class="mt-12 text-sm opacity-70">© <span id="year"></span> KittyAIChat — Demo</footer>
-</div>
-
-<!-- =========================
-     MAIN APP (Chat + Sidebar) - hidden until "Open Chat"
+     MAIN APP (Chat + Sidebar) - shown after login landing -> chat
      ========================= -->
 <div id="app" class="hidden min-h-screen flex flex-col">
 
@@ -179,7 +181,7 @@
   function randomColor(){ const colors = ["#6B7280","#EF4444","#10B981","#3B82F6","#F59E0B","#8B5CF6","#EC4899","#14B8A6"]; return colors[Math.floor(Math.random()*colors.length)]; }
   function escapeHtml(str=""){ return String(str).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
 
-  // Load/create session
+  // Load/create session helpers
   function getSession(id){ return sessions.find(s=>s.id===id); }
   function createNewSession(title){
     const now = new Date();
@@ -202,22 +204,19 @@
   }
 
   // ---------------------------
-  // DOM references
+  // DOM refs
   // ---------------------------
-  const loginPage = document.getElementById("login-page");
   const landingPage = document.getElementById("landing-page");
+  const loginPage = document.getElementById("login-page");
   const appDiv = document.getElementById("app");
   const historySidebar = document.getElementById("history-sidebar");
   const sessionsListEl = document.getElementById("sessions-list");
   const messagesWrap = document.getElementById("messages-wrap");
   const userNameHeader = document.getElementById("user-name-header");
   const userAvatarHeader = document.getElementById("user-avatar-header");
-  const userSubHeader = document.getElementById("user-sub-header");
   const openChatBtn = document.getElementById("open-chat-btn");
-  const sendBtn = document.getElementById("send-btn");
-  const chatInput = document.getElementById("chat-input");
 
-  // Initial year
+  // initial year
   document.getElementById("year").textContent = new Date().getFullYear();
 
   // ---------------------------
@@ -246,7 +245,6 @@
       sessionsListEl.appendChild(row);
     });
 
-    // Bind actions
     sessionsListEl.querySelectorAll("[data-load]").forEach(btn => btn.onclick = e => {
       const id = e.currentTarget.getAttribute("data-load");
       switchToSession(id);
@@ -280,7 +278,6 @@
       wrapper.className = `flex ${m.role === "user" ? "justify-end" : "justify-start"}`;
       const bubble = document.createElement("div");
       bubble.className = `max-w-[80%] px-3 py-2 rounded-xl text-sm ${m.role === "user" ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-800 dark:text-gray-100"}`;
-      // avatar markup
       let avatarHTML = "";
       if(m.role === "user"){
         if(currentUser.isGoogle && currentUser.avatar) {
@@ -300,18 +297,19 @@
   }
 
   // ---------------------------
-  // Chat actions (send, quick prompts)
+  // Chat actions (send)
   // ---------------------------
   async function sendCurrentMessage(){
-    const val = (document.getElementById("chat-input") || chatInput).value.trim();
+    const inputEl = document.getElementById("chat-input");
+    const val = inputEl.value.trim();
     if(!val) return;
     addMessage("user", val);
     renderMessages();
-    (document.getElementById("chat-input") || chatInput).value = "";
+    inputEl.value = "";
 
     // add temporary typing indicator
     const s = getSession(currentSessionId);
-    s.messages.push({ role: "assistant", content: "⏳ Kitty is typing...", time: new Date().toLocaleTimeString(), _typing: true });
+    s.messages.push({ role: "assistant", content: "⏳ Gemini is typing...", time: new Date().toLocaleTimeString(), _typing: true });
     renderMessages();
 
     // Call Gemini (or demo)
@@ -321,21 +319,15 @@
         await new Promise(r=>setTimeout(r,700));
         replyText = "This is a demo reply. Swap in your Gemini API key to get real responses.";
       } else {
-        // try generateContent
         let result;
-        try {
-          result = await model.generateContent(val);
-        } catch(e) {
-          // fallback attempt
+        try { result = await model.generateContent(val); } catch(e) {
           result = await model.generateContent?.({ prompt: val }).catch(()=>{ throw e; });
         }
-        // extract text
         try {
           replyText = typeof result.response?.text === "function" ? result.response.text() : (result?.response?.text || result?.text || JSON.stringify(result));
         } catch(e) { replyText = JSON.stringify(result); }
       }
 
-      // remove typing indicator & push assistant message
       const s2 = getSession(currentSessionId);
       if(s2 && s2.messages.length && s2.messages[s2.messages.length-1]._typing) s2.messages.pop();
       s2.messages.push({ role: "assistant", content: replyText, time: new Date().toLocaleTimeString() });
@@ -352,19 +344,17 @@
     }
   }
 
-  // Bind send and quick prompts
+  // Bind controls & UI buttons
   function bindChatControls(){
     document.querySelectorAll(".quick-prompt").forEach(btn => {
-      btn.onclick = () => { (document.getElementById("chat-input") || chatInput).value = btn.textContent; sendCurrentMessage(); };
+      btn.onclick = () => { document.getElementById("chat-input").value = btn.textContent; sendCurrentMessage(); };
     });
 
-    (document.getElementById("send-btn") || sendBtn).onclick = sendCurrentMessage;
-    const inputEl = document.getElementById("chat-input");
-    inputEl.addEventListener("keydown", (e) => {
+    document.getElementById("send-btn").onclick = sendCurrentMessage;
+    document.getElementById("chat-input").addEventListener("keydown", (e) => {
       if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendCurrentMessage(); }
     });
 
-    // new session, clear, export
     document.getElementById("new-session-btn").onclick = () => { createNewSession(); renderMessages(); };
     document.getElementById("sidebar-new").onclick = () => { createNewSession(); historySidebar.classList.add("hidden"); renderMessages(); };
 
@@ -380,42 +370,25 @@
       a.download = `novachat-sessions-${new Date().toISOString().slice(0,19)}.txt`; document.body.appendChild(a); a.click(); a.remove();
     };
 
-    document.getElementById("new-session-btn").onclick = () => { createNewSession(); renderMessages(); };
     document.getElementById("history-toggle").onclick = () => { historySidebar.classList.remove("hidden"); renderSessionsList(); };
     document.getElementById("history-close").onclick = () => { historySidebar.classList.add("hidden"); };
-
     document.getElementById("sidebar-new").onclick = () => { createNewSession(); renderMessages(); historySidebar.classList.add("hidden"); };
 
-    document.getElementById("clear-chat-btn")?.addEventListener?.("click", ()=>{}); // noop if not present
-
-    // Clear current session (button in header)
-    document.getElementById("clear-chat-btn")?.addEventListener?.("click", () => {
-      const s = getSession(currentSessionId);
-      if(!s) return;
-      if(confirm("Clear current session messages?")) { s.messages = []; saveCurrentSession(); renderMessages(); }
-    });
-
-    // Clear using header "clear" (if you want header button to remove messages)
-    // We added / use logout as well
     document.getElementById("logout-btn").onclick = () => {
-      if(confirm("Sign out and return to login?")) {
-        // keep sessions saved; just show login
+      if(confirm("Sign out and return to landing?")) {
+        // show landing page
         appDiv.classList.add("hidden");
-        landingPage.classList.add("hidden");
-        loginPage.classList.remove("hidden");
+        landingPage.classList.remove("hidden");
         // reset state
         currentUser = { name: "Guest", avatar: "", color: "#6B7280", isGoogle: false };
         currentSessionId = null;
       }
     };
 
-    // Theme toggle
     document.getElementById("theme-toggle").onclick = () => { document.documentElement.classList.toggle("dark"); };
   }
 
-  // ---------------------------
   // Switch session
-  // ---------------------------
   function switchToSession(id){
     saveCurrentSession();
     currentSessionId = id;
@@ -426,7 +399,7 @@
   // ---------------------------
   // Sign-in flows
   // ---------------------------
-  // Google OAuth callback
+  // Google OAuth callback (will be called by Google button)
   window.handleCredentialResponse = (resp) => {
     try {
       const profile = parseJwt(resp.credential);
@@ -434,7 +407,7 @@
       currentUser.avatar = profile.picture || "";
       currentUser.isGoogle = true;
       isDemoMode = false;
-      afterLoginShowLanding();
+      afterLoginGotoChat();
     } catch(e){
       console.error("Google login parse failed", e);
       alert("Google login failed.");
@@ -449,46 +422,36 @@
     currentUser.color = randomColor();
     currentUser.isGoogle = false;
     isDemoMode = false;
-    afterLoginShowLanding();
+    afterLoginGotoChat();
   };
 
-  // Demo (no AI)
+  // Demo continue
   document.getElementById("demo-continue").onclick = () => {
     currentUser.name = "Demo";
     currentUser.avatar = "D";
     currentUser.color = randomColor();
     currentUser.isGoogle = false;
     isDemoMode = true;
-    afterLoginShowLanding();
+    afterLoginGotoChat();
   };
 
-  // After any successful login -> show landing page
-  function afterLoginShowLanding(){
+  // Back to landing from login
+  document.getElementById("back-to-landing").onclick = () => {
     loginPage.classList.add("hidden");
     landingPage.classList.remove("hidden");
-    // update header mock (will update when entering app)
-    document.getElementById("user-name-header").textContent = currentUser.name;
-    const avatarH = document.getElementById("user-avatar-header");
-    avatarH.innerHTML = "";
-    if(currentUser.isGoogle && currentUser.avatar){
-      avatarH.innerHTML = `<img src="${currentUser.avatar}" class="w-10 h-10 rounded-full" />`;
-    } else {
-      avatarH.textContent = currentUser.avatar || currentUser.name.charAt(0).toUpperCase();
-      avatarH.style.background = currentUser.color || randomColor();
-    }
-  }
+  };
 
-  // Open Chat from landing page
+  // Open Chat (from landing) -> go to login page
   document.getElementById("open-chat-btn").onclick = () => {
     landingPage.classList.add("hidden");
+    loginPage.classList.remove("hidden");
+  };
+
+  // After login: directly open chat page
+  function afterLoginGotoChat(){
+    loginPage.classList.add("hidden");
     appDiv.classList.remove("hidden");
-    // ensure current session
-    if(!sessions.length) createNewSession();
-    if(!currentSessionId) currentSessionId = sessions[0].id;
-    renderSessionsList();
-    renderMessages();
-    bindChatControls();
-    // update header user info
+    // header info
     document.getElementById("user-name-header").textContent = currentUser.name;
     const headerAvatar = document.getElementById("user-avatar-header");
     headerAvatar.innerHTML = "";
@@ -499,10 +462,14 @@
       headerAvatar.textContent = currentUser.avatar || currentUser.name.charAt(0).toUpperCase();
       headerAvatar.style.background = currentUser.color || randomColor();
     }
-  };
 
-  // How link scroll
-  document.getElementById("how-link").onclick = (e) => { e.preventDefault(); alert("This demo shows a client-side integration for UX. For production, proxy your Gemini API key via a server and keep credentials secret."); };
+    // ensure at least one session exists
+    if(!sessions.length) createNewSession();
+    if(!currentSessionId) currentSessionId = sessions[0].id;
+    renderSessionsList();
+    renderMessages();
+    bindChatControls();
+  }
 
   // ---------------------------
   // JWT parse helper
@@ -528,7 +495,7 @@
   renderSessionsList();
   renderMessages();
 
-  // Expose helpful debug helpers
+  // Expose debug helpers
   window.__novachat = { sessions, save: ()=>saveSessions(sessions), create: createNewSession };
 </script>
 </body>
